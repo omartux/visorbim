@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visor BIM IFC - Offline</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="top-bar">
+      <div class="brand">🏗️ Visor BIM IFC</div>
+      <div class="top-actions">
+        <div class="status" id="status">Esperando archivo...</div>
+        <label class="btn-open" for="ifc-input">
+          Abrir archivo IFC
+          <input type="file" id="ifc-input" accept=".ifc" style="display:none" />
+        </label>
+      </div>
+    </header>
+
+    <div id="canvas-container"></div>
+
+    <div id="empty-state" class="empty-state">
+      <div class="empty-card">
+        <div class="empty-icon">🏗️</div>
+        <h2>Ningún modelo cargado</h2>
+        <p>Haz clic en "Abrir archivo IFC" para visualizar tu modelo.</p>
+      </div>
+    </div>
+
+    <aside id="info-panel" class="info-panel hidden">
+      <button class="close-btn" id="close-info">×</button>
+      <h3 id="info-title">Elemento seleccionado</h3>
+      <div id="info-content"></div>
+    </aside>
+
+    <div id="loading-overlay" class="loading-overlay hidden">
+      <div class="spinner"></div>
+      <div id="loading-text">Cargando modelo...</div>
+    </div>
+  </div>
+
+  <!-- Dependencias locales (scripts clásicos, sin CDN, sin servidor) -->
+  <script src="vendor/three.js"></script>
+  <script src="vendor/OrbitControls.js"></script>
+  <script src="vendor/BufferGeometryUtils.js"></script>
+  <script src="vendor/web-ifc-api-iife.js"></script>
+  <script src="vendor/web-ifc-wasm-b64.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
