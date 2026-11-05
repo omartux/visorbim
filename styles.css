@@ -337,6 +337,7 @@ html, body, #app {
 
 /* ---------- Selector de modo de visualizacion ---------- */
 .mode-popover { width: 214px; }
+.explode-popover { width: 240px; }
 
 .mode-list {
   display: flex;

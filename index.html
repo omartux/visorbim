@@ -58,6 +58,9 @@
       <button type="button" class="tool-btn" id="btn-mode" title="Modo de visualización">
         Modo
       </button>
+      <button type="button" class="tool-btn" id="btn-explode" title="Vista explosionada">
+        Explosión
+      </button>
       <button type="button" class="tool-btn" id="btn-data" title="Datos del plano">
         Datos
       </button>
@@ -112,6 +115,16 @@
         <button type="button" class="mode-option" data-mode="grayscale">Escala de grises</button>
         <button type="button" class="mode-option" data-mode="xray">Rayos X</button>
       </div>
+    </div>
+
+    <div id="explode-popover" class="tool-panel explode-popover hidden">
+      <h3>Vista explosionada</h3>
+      <div class="field-row">
+        <label for="explode-range">Nivel</label>
+        <input type="range" id="explode-range" min="0" max="100" value="0" />
+        <span class="range-label" id="explode-label">0%</span>
+      </div>
+      <button type="button" class="btn-secondary wide" id="btn-explode-reset">Restablecer</button>
     </div>
 
     <div id="empty-state" class="empty-state">

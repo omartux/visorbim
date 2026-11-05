@@ -73,6 +73,9 @@
     background: '#0f172a',
     displayMode: 'normal',
     lineFillMaterial: null,
+    explode: { current: 0, target: 0 },
+    explodeRadius: 0,
+    explodePrepared: false,
     section: { enabled: false, axis: 'y', offset: 50, flip: false, plane: null },
     planData: null
   };
@@ -110,6 +113,11 @@
     bgColor: document.getElementById('bg-color'),
     btnMode: document.getElementById('btn-mode'),
     modePopover: document.getElementById('mode-popover'),
+    btnExplode: document.getElementById('btn-explode'),
+    explodePopover: document.getElementById('explode-popover'),
+    explodeRange: document.getElementById('explode-range'),
+    explodeLabel: document.getElementById('explode-label'),
+    btnExplodeReset: document.getElementById('btn-explode-reset'),
     dataModal: document.getElementById('data-modal'),
     closeData: document.getElementById('close-data'),
     cancelData: document.getElementById('cancel-data'),
@@ -651,6 +659,60 @@
     render();
   }
 
+  // ---------- Vista explosionada ----------
+  function resetExplodeState() {
+    state.explode.current = 0;
+    state.explode.target = 0;
+    state.explodeRadius = 0;
+    state.explodePrepared = false;
+    if (els.explodeRange) els.explodeRange.value = '0';
+    if (els.explodeLabel) els.explodeLabel.textContent = '0%';
+    if (els.btnExplode) els.btnExplode.classList.remove('active');
+  }
+
+  function prepareExplode() {
+    if (state.explodePrepared || !state.modelBounds || !state.meshes.length) return;
+
+    var center = getModelCenter();
+    var fallback = new THREE.Vector3(0, 1, 0);
+
+    for (var i = 0; i < state.meshes.length; i++) {
+      var mesh = state.meshes[i];
+      if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+      var meshCenter = mesh.geometry.boundingBox.getCenter(new THREE.Vector3());
+      var dir = meshCenter.sub(center);
+      if (dir.lengthSq() < 1e-8) dir.copy(fallback);
+      else dir.normalize();
+      mesh.userData.explodeDir = dir;
+    }
+
+    state.explodeRadius = getModelRadius();
+    state.explodePrepared = true;
+    applyExplode(state.explode.current);
+  }
+
+  function applyExplode(amount) {
+    if (!state.meshes.length) return;
+    var radius = state.explodeRadius || getModelRadius();
+    var distance = radius * 0.6 * amount;
+
+    for (var i = 0; i < state.meshes.length; i++) {
+      var mesh = state.meshes[i];
+      var dir = mesh.userData.explodeDir;
+      if (!dir) continue;
+      mesh.position.copy(dir).multiplyScalar(distance);
+    }
+  }
+
+  function setExplodeTarget(value) {
+    var amount = Math.max(0, Math.min(1, value));
+    if (amount > 0) prepareExplode();
+    state.explode.target = amount;
+    if (els.explodeRange) els.explodeRange.value = String(Math.round(amount * 100));
+    if (els.explodeLabel) els.explodeLabel.textContent = Math.round(amount * 100) + '%';
+    if (els.btnExplode) els.btnExplode.classList.toggle('active', amount > 0.001);
+  }
+
   // ---------- Datos del plano ----------
   function initPlanData() {
     var data = {};
@@ -721,7 +783,7 @@
   function togglePanel(panel) {
     if (!panel) return;
     var willShow = panel.classList.contains('hidden');
-    var panels = [els.sectionPanel, els.bgPopover, els.modePopover];
+    var panels = [els.sectionPanel, els.bgPopover, els.modePopover, els.explodePopover];
     for (var i = 0; i < panels.length; i++) {
       if (panels[i] && panels[i] !== panel) panels[i].classList.add('hidden');
     }
@@ -843,6 +905,27 @@
       els.modePopover.classList.add('hidden');
     });
 
+    // Vista explosionada
+    if (els.btnExplode) {
+      els.btnExplode.addEventListener('click', function (e) {
+        e.stopPropagation();
+        togglePanel(els.explodePopover);
+      });
+    }
+    if (els.explodeRange) {
+      els.explodeRange.addEventListener('input', function () {
+        setExplodeTarget(Number(this.value) / 100);
+      });
+    }
+    if (els.btnExplodeReset) {
+      els.btnExplodeReset.addEventListener('click', function () { setExplodeTarget(0); });
+    }
+    document.addEventListener('click', function (e) {
+      if (!els.explodePopover || els.explodePopover.classList.contains('hidden')) return;
+      if (els.explodePopover.contains(e.target) || (els.btnExplode && els.btnExplode.contains(e.target))) return;
+      els.explodePopover.classList.add('hidden');
+    });
+
     // Datos del plano
     if (els.btnData) els.btnData.addEventListener('click', function () { showDataModal(true); });
     if (els.closeData) els.closeData.addEventListener('click', function () { showDataModal(false); });
@@ -868,6 +951,7 @@
       if (els.sectionPanel) els.sectionPanel.classList.add('hidden');
       if (els.bgPopover) els.bgPopover.classList.add('hidden');
       if (els.modePopover) els.modePopover.classList.add('hidden');
+      if (els.explodePopover) els.explodePopover.classList.add('hidden');
     });
 
     updateProjectionButton();
@@ -1048,6 +1132,7 @@
         setPrintEnabled(true);
         els.empty.classList.add('hidden');
         updateModelBounds();
+        resetExplodeState();
         updateSectionPlane();
         setProjection('persp');
         setView('regular');
@@ -1092,6 +1177,8 @@
     if (els.sectionEnabled) els.sectionEnabled.checked = false;
     if (els.sectionOffset) els.sectionOffset.value = '50';
     if (els.sectionOffsetLabel) els.sectionOffsetLabel.textContent = '50%';
+
+    resetExplodeState();
 
     setPrintEnabled(false);
     updateSheet();
@@ -1280,6 +1367,16 @@
 
   function animate() {
     requestAnimationFrame(animate);
+
+    var explode = state.explode;
+    if (explode && Math.abs(explode.target - explode.current) > 0.0005) {
+      explode.current += (explode.target - explode.current) * 0.18;
+      if (Math.abs(explode.target - explode.current) < 0.0005) {
+        explode.current = explode.target;
+      }
+      applyExplode(explode.current);
+    }
+
     if (state.controls) state.controls.update();
     render();
   }
