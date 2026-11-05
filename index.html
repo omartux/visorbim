@@ -3,15 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Visor BIM IFC - Offline</title>
+  <title>Estrukta Ingeniería y Desarrollo - Visor BIM IFC</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div id="app">
     <header class="top-bar">
-      <div class="brand">🏗️ Visor BIM IFC</div>
+      <div class="brand">
+        <span class="brand-mark">🏗️</span>
+        <span class="brand-text">
+          <span class="brand-name">Estrukta Ingeniería y Desarrollo</span>
+          <span class="brand-version" data-app-version>v1.0.0</span>
+        </span>
+      </div>
       <div class="top-actions">
         <div class="status" id="status">Esperando archivo...</div>
+        <button type="button" class="btn-secondary" id="btn-about">Acerca de</button>
+        <button type="button" class="btn-secondary" id="btn-print" disabled>Imprimir / PDF</button>
         <label class="btn-open" for="ifc-input">
           Abrir archivo IFC
           <input type="file" id="ifc-input" accept=".ifc" style="display:none" />
@@ -20,6 +28,91 @@
     </header>
 
     <div id="canvas-container"></div>
+
+    <nav id="view-toolbar" class="view-toolbar" aria-label="Herramientas de vista">
+      <button type="button" class="tool-btn active" data-view="regular" title="Vista regular (original)">
+        <span class="tool-glyph">◉</span><span>Regular</span>
+      </button>
+      <button type="button" class="tool-btn" data-view="iso" title="Vista isométrica">
+        <span class="tool-glyph">⬔</span><span>Iso</span>
+      </button>
+      <button type="button" class="tool-btn" data-view="front" title="Vista de frente">
+        <span class="tool-glyph">▣</span><span>Frente</span>
+      </button>
+      <button type="button" class="tool-btn" data-view="side" title="Vista de costado">
+        <span class="tool-glyph">◫</span><span>Costado</span>
+      </button>
+      <button type="button" class="tool-btn" data-view="top" title="Vista superior (planta)">
+        <span class="tool-glyph">▤</span><span>Arriba</span>
+      </button>
+      <div class="tool-sep"></div>
+      <button type="button" class="tool-btn" id="btn-projection" title="Alternar proyección ortográfica/perspectiva">
+        Persp
+      </button>
+      <button type="button" class="tool-btn" id="btn-section" title="Plano de corte">
+        Sección
+      </button>
+      <button type="button" class="tool-btn" id="btn-bg" title="Color de fondo">
+        Fondo
+      </button>
+      <button type="button" class="tool-btn" id="btn-mode" title="Modo de visualización">
+        Modo
+      </button>
+      <button type="button" class="tool-btn" id="btn-data" title="Datos del plano">
+        Datos
+      </button>
+    </nav>
+
+    <div id="section-panel" class="tool-panel section-panel hidden">
+      <h3>Plano de corte</h3>
+      <label class="switch-row">
+        <input type="checkbox" id="section-enabled" />
+        <span>Activar corte</span>
+      </label>
+      <div class="field-row">
+        <label for="section-axis">Eje</label>
+        <select id="section-axis">
+          <option value="x">X (costado)</option>
+          <option value="y" selected>Y (planta)</option>
+          <option value="z">Z (frente)</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <label for="section-offset">Posición</label>
+        <input type="range" id="section-offset" min="0" max="100" value="50" />
+        <span class="range-label" id="section-offset-label">50%</span>
+      </div>
+      <label class="switch-row">
+        <input type="checkbox" id="section-flip" />
+        <span>Invertir lado</span>
+      </label>
+      <button type="button" class="btn-secondary wide" id="btn-section-view">Vista de sección</button>
+    </div>
+
+    <div id="bg-popover" class="tool-panel bg-popover hidden">
+      <h3>Color de fondo</h3>
+      <div class="bg-swatches">
+        <button type="button" class="bg-swatch" data-color="#0f172a" style="background:#0f172a" title="Oscuro"></button>
+        <button type="button" class="bg-swatch" data-color="#0b1220" style="background:#0b1220" title="Azul noche"></button>
+        <button type="button" class="bg-swatch" data-color="#334155" style="background:#334155" title="Gris"></button>
+        <button type="button" class="bg-swatch" data-color="#e2e8f0" style="background:#e2e8f0" title="Claro"></button>
+        <button type="button" class="bg-swatch" data-color="#ffffff" style="background:#ffffff" title="Blanco"></button>
+      </div>
+      <label class="bg-custom">
+        <span>Otro color</span>
+        <input type="color" id="bg-color" value="#0f172a" />
+      </label>
+    </div>
+
+    <div id="mode-popover" class="tool-panel mode-popover hidden">
+      <h3>Modo de visualización</h3>
+      <div class="mode-list">
+        <button type="button" class="mode-option active" data-mode="normal">Normal</button>
+        <button type="button" class="mode-option" data-mode="lines">Líneas B/N</button>
+        <button type="button" class="mode-option" data-mode="grayscale">Escala de grises</button>
+        <button type="button" class="mode-option" data-mode="xray">Rayos X</button>
+      </div>
+    </div>
 
     <div id="empty-state" class="empty-state">
       <div class="empty-card">
@@ -38,6 +131,99 @@
     <div id="loading-overlay" class="loading-overlay hidden">
       <div class="spinner"></div>
       <div id="loading-text">Cargando modelo...</div>
+    </div>
+
+    <footer class="app-footer">
+      <span class="footer-tagline">Desarrollado con cariño para los profesionales de la construcción</span>
+      <span class="footer-credit">Omar Castillo · 2026 · <span data-app-version>v1.0.0</span></span>
+    </footer>
+
+    <div id="about-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="about-title">
+      <div class="modal-card">
+        <button type="button" class="close-btn" id="close-about" aria-label="Cerrar">×</button>
+        <div class="modal-brand">🏗️ Estrukta Ingeniería y Desarrollo</div>
+        <div class="modal-version">Versión <span data-app-version>v1.0.0</span></div>
+        <h3 id="about-title">Visor BIM IFC</h3>
+        <p>Visualización local de modelos IFC, sin servidor ni conexión a internet.</p>
+        <p class="modal-tagline">Desarrollado con cariño para los profesionales de la construcción.</p>
+        <p class="modal-credit">Omar Castillo · 2026</p>
+      </div>
+    </div>
+
+    <div id="data-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="data-title">
+      <div class="modal-card data-card">
+        <button type="button" class="close-btn" id="close-data" aria-label="Cerrar">×</button>
+        <h3 id="data-title">Datos del plano</h3>
+        <p class="data-hint">Estos datos se muestran en el cajetín de impresión.</p>
+        <div class="data-grid">
+          <label class="data-field"><span>Proyecto</span><input type="text" id="field-proyecto" /></label>
+          <label class="data-field"><span>Cliente</span><input type="text" id="field-cliente" /></label>
+          <label class="data-field"><span>Ubicación</span><input type="text" id="field-ubicacion" /></label>
+          <label class="data-field"><span>Título del plano</span><input type="text" id="field-titulo" /></label>
+          <label class="data-field"><span>Nº de plano</span><input type="text" id="field-numero" /></label>
+          <label class="data-field"><span>Escala</span><input type="text" id="field-escala" placeholder="1:100" /></label>
+          <label class="data-field"><span>Fecha</span><input type="text" id="field-fecha" /></label>
+          <label class="data-field"><span>Revisión</span><input type="text" id="field-revision" /></label>
+          <label class="data-field"><span>Dibujó</span><input type="text" id="field-dibujo" /></label>
+          <label class="data-field"><span>Revisó</span><input type="text" id="field-reviso" /></label>
+          <label class="data-field"><span>Lámina</span><input type="text" id="field-lamina" /></label>
+          <label class="data-field data-field-full"><span>Notas</span><textarea id="field-notas" rows="2"></textarea></label>
+        </div>
+        <div class="data-actions">
+          <button type="button" class="btn-secondary" id="cancel-data">Cancelar</button>
+          <button type="button" class="btn-open" id="save-data">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="print-view" aria-hidden="true">
+    <div class="sheet">
+      <div class="sheet-header">
+        <div class="sheet-brand">
+          <span class="sheet-brand-name">Estrukta Ingeniería y Desarrollo</span>
+          <span class="sheet-brand-sub">Visor BIM IFC · <span data-app-version>v1.0.0</span></span>
+        </div>
+        <div class="sheet-meta">
+          <div class="sheet-meta-item">
+            <span class="sheet-meta-label">VISTA</span>
+            <span id="sheet-view-name">Isométrico</span>
+          </div>
+          <div class="sheet-meta-item">
+            <span class="sheet-meta-label">IMPRESO</span>
+            <span id="print-date"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet-drawing">
+        <img id="print-image" alt="Vista actual del modelo IFC" />
+      </div>
+
+      <div class="sheet-titleblock">
+        <div class="tb-cell tb-brand">
+          <div class="tb-brand-name">ESTRUKTA</div>
+          <div class="tb-brand-sub">Ingeniería y Desarrollo</div>
+          <div class="tb-brand-tag">Construcción · BIM</div>
+        </div>
+        <div class="tb-cell tb-project"><span class="tb-label">Proyecto</span><span class="tb-value" id="sheet-proyecto"></span></div>
+        <div class="tb-cell tb-client"><span class="tb-label">Cliente</span><span class="tb-value" id="sheet-cliente"></span></div>
+        <div class="tb-cell tb-title"><span class="tb-label">Título del plano</span><span class="tb-value" id="sheet-titulo"></span></div>
+        <div class="tb-cell tb-number"><span class="tb-label">Nº de plano</span><span class="tb-value" id="sheet-numero"></span></div>
+        <div class="tb-cell tb-scale"><span class="tb-label">Escala</span><span class="tb-value" id="sheet-escala"></span></div>
+        <div class="tb-cell tb-location"><span class="tb-label">Ubicación</span><span class="tb-value" id="sheet-ubicacion"></span></div>
+        <div class="tb-cell tb-date"><span class="tb-label">Fecha</span><span class="tb-value" id="sheet-fecha"></span></div>
+        <div class="tb-cell tb-rev"><span class="tb-label">Rev.</span><span class="tb-value" id="sheet-revision"></span></div>
+        <div class="tb-cell tb-drawn"><span class="tb-label">Dibujó</span><span class="tb-value" id="sheet-dibujo"></span></div>
+        <div class="tb-cell tb-checked"><span class="tb-label">Revisó</span><span class="tb-value" id="sheet-reviso"></span></div>
+        <div class="tb-cell tb-sheet"><span class="tb-label">Lámina</span><span class="tb-value" id="sheet-lamina"></span></div>
+        <div class="tb-cell tb-notes"><span class="tb-label">Notas</span><span class="tb-value" id="sheet-notas"></span></div>
+      </div>
+
+      <div class="sheet-footer">
+        <span>Desarrollado con cariño para los profesionales de la construcción</span>
+        <span>Omar Castillo · 2026 · <span data-app-version>v1.0.0</span></span>
+      </div>
     </div>
   </div>
 
